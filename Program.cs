@@ -2,7 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using VkGroupsPostSyncHelper.Logic;
-using VkGroupsPostSyncHelper.SQLite;
+using VkGroupsPostSyncHelper.DAL.SQLite;
 using VkGroupsPostSyncHelper.Telegram;
 using VkGroupsPostSyncHelper.VK;
 using System;
@@ -17,6 +17,7 @@ namespace VkGroupsPostSyncHelper
             try
             {
                 Log.Logger = new LoggerConfiguration()
+                    .MinimumLevel.Verbose()
                     .WriteTo.Console(restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Verbose)
                     .WriteTo.File("Logs/log-.log",
                         rollingInterval: RollingInterval.Month,
@@ -48,7 +49,7 @@ namespace VkGroupsPostSyncHelper
             {
                 services.
                     AddEntityFrameworkSqlite().
-                    AddDbContext<MainDbContext>();
+                    AddDbContext<MainDbContext>(ServiceLifetime.Transient);
                 services.AddHostedService<ReadPostsService>();
                 services.AddHostedService<WritePostsService>();
                 services.AddSingleton<VkHandler>();

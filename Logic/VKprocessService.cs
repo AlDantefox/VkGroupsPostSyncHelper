@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using VkGroupsPostSyncHelper.SQLite;
+using VkGroupsPostSyncHelper.DAL.SQLite;
 using VkNet.Model.Attachments;
 
 namespace VkGroupsPostSyncHelper.Logic
@@ -49,7 +49,7 @@ namespace VkGroupsPostSyncHelper.Logic
                         PostDate = post.Date
                     };
                     await _context.VkGroupPosts.AddAsync(addedPost);
-                    _logger.LogInformation($"Try add new post with id:{addedPost.VkId} and date:{addedPost.PostDate}");
+                    _logger.LogInformation($"Try add new post to DB with id:{addedPost.VkId} and date:{addedPost.PostDate}");
                     added++;
 
                     if (post.Attachments != null && post.Attachments.Count > 0)
@@ -82,7 +82,7 @@ namespace VkGroupsPostSyncHelper.Logic
                                     }
 
                                     await _context.VkPostImages.AddAsync(img);
-                                    _logger.LogInformation($"Try add new post image with id:{img.VkId} and url:{img.Url}");
+                                    _logger.LogInformation($"Try add new post image to DB with id:{img.VkId} and url:{img.Url}");
                                 }
                             }
                             else

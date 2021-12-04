@@ -6,26 +6,32 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 
 namespace VkGroupsPostSyncHelper
 {
     public class ReadPostsService : IHostedService
     {
-        ILogger<ReadPostsService> _logger;
-        IHostApplicationLifetime _app;
-        VkHandler _vkHandler;
-        VKprocessService _vkService;
+        private ILogger<ReadPostsService> _logger;
+        private IHostApplicationLifetime _app;
+        private IConfiguration _config;
 
-        CrontabSchedule _shedule;
-        DateTime _sheduledTime;
-        const string _shedulePattern_ = "*/60 * * * *";
-        public ReadPostsService(IHostApplicationLifetime app, VkHandler vkHandler, VKprocessService vkService, ILogger<ReadPostsService> logger)
+        private VkHandler _vkHandler;
+        private VKprocessService _vkService;
+
+        private CrontabSchedule _shedule;
+        private DateTime _sheduledTime;
+        public ReadPostsService(IHostApplicationLifetime app, VkHandler vkHandler, VKprocessService vkService, ILogger<ReadPostsService> logger, IConfiguration config)
         {
             _app = app;
             _vkHandler = vkHandler;
             _vkService = vkService;
-            _shedule = CrontabSchedule.Parse(_shedulePattern_, new CrontabSchedule.ParseOptions() { IncludingSeconds = false });
             _logger = logger;
+            _config = config;
+
+            var shedulePattern = _config.GetSection("VK")["CheckNewPostsCrontab"];
+            _shedule = CrontabSchedule.Parse(shedulePattern, new CrontabSchedule.ParseOptions() { IncludingSeconds = false });
+            UpdateShedule();
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -55,9 +61,8 @@ namespace VkGroupsPostSyncHelper
                     {
                         _logger.LogError(ex, $"Error on reading new VK posts");
                         _app.StopApplication();
-                    }
-                    _sheduledTime = _shedule.GetNextOccurrence(DateTime.Now);
-                    _logger.LogDebug($"Next read posts try at {_sheduledTime}");
+                    }                    
+                    UpdateShedule();                    
                 }
 
             }, cancellationToken);
@@ -69,6 +74,12 @@ namespace VkGroupsPostSyncHelper
         {
             _logger.LogInformation("End work ReadPostsService");
             return Task.CompletedTask;
+        }
+
+        private void UpdateShedule()
+        {
+            _sheduledTime = _shedule.GetNextOccurrence(DateTime.Now);
+            _logger.LogDebug($"Next read posts try at {_sheduledTime}");
         }
     }
 }
