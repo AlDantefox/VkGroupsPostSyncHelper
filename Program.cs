@@ -6,6 +6,7 @@ using VkGroupsPostSyncHelper.SQLite;
 using VkGroupsPostSyncHelper.Telegram;
 using VkGroupsPostSyncHelper.VK;
 using System;
+using Serilog;
 
 namespace VkGroupsPostSyncHelper
 {
@@ -15,28 +16,36 @@ namespace VkGroupsPostSyncHelper
         {
             try
             {
+                Log.Logger = new LoggerConfiguration()
+                    .WriteTo.Console(restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Verbose)
+                    .WriteTo.File("Logs/log-.log",
+                        rollingInterval: RollingInterval.Month,
+                        retainedFileCountLimit: 10,
+                        restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information)
+                    .CreateLogger();
                 var builder = CreateHostBuilder(args).Build();
                 builder.Run();
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
+                Log.Fatal(ex, "App not started");
             }
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-            .ConfigureAppConfiguration(builder => {
+            .ConfigureAppConfiguration(builder =>
+            {
                 var config = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", false)
                 //place here your real key values
                 .AddJsonFile("appsettings.Local.json", false)
                 .Build();
-
                 builder.AddConfiguration(config);
             })
-            .ConfigureServices(services => {
-                //services.Configuration;
+            .UseSerilog()
+            .ConfigureServices(services =>
+            {
                 services.
                     AddEntityFrameworkSqlite().
                     AddDbContext<MainDbContext>();

@@ -5,11 +5,13 @@ using VkGroupsPostSyncHelper.VK;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace VkGroupsPostSyncHelper
 {
     public class ReadPostsService : IHostedService
     {
+        ILogger<ReadPostsService> _logger;
         IHostApplicationLifetime _app;
         VkHandler _vkHandler;
         VKprocessService _vkService;
@@ -17,25 +19,26 @@ namespace VkGroupsPostSyncHelper
         CrontabSchedule _shedule;
         DateTime _sheduledTime;
         const string _shedulePattern_ = "*/60 * * * *";
-        public ReadPostsService(IHostApplicationLifetime app, VkHandler vkHandler, VKprocessService vkService)
+        public ReadPostsService(IHostApplicationLifetime app, VkHandler vkHandler, VKprocessService vkService, ILogger<ReadPostsService> logger)
         {
             _app = app;
             _vkHandler = vkHandler;
             _vkService = vkService;
             _shedule = CrontabSchedule.Parse(_shedulePattern_, new CrontabSchedule.ParseOptions() { IncludingSeconds = false });
+            _logger = logger;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
             Task.Run(async () =>
             {
-                Console.WriteLine("Start ReadPostsService");
+                _logger.LogInformation("Start ReadPostsService");
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     await Task.Delay(Math.Max(0, (int)(_sheduledTime.Subtract(DateTime.Now).TotalMilliseconds)), cancellationToken);
                     try
                     {
-                        Console.WriteLine("Start loading new posts");
+                        _logger.LogDebug("Start loading new posts");
                         int addedCount = 0, totalAdded = 0;
                         ulong loaded = 0;
                         do
@@ -46,15 +49,15 @@ namespace VkGroupsPostSyncHelper
                             totalAdded += addedCount;
                         }
                         while (addedCount > 0);
-                        Console.WriteLine($"Load complete. Total added: {totalAdded}");
+                        _logger.LogDebug($"Load complete. Total added: {totalAdded}");
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error in ReadPostsService: { ex.Message }");
+                        _logger.LogError(ex, $"Error on reading new VK posts");
                         _app.StopApplication();
                     }
                     _sheduledTime = _shedule.GetNextOccurrence(DateTime.Now);
-                    Console.WriteLine($"Next read posts try at {_sheduledTime}");
+                    _logger.LogDebug($"Next read posts try at {_sheduledTime}");
                 }
 
             }, cancellationToken);
@@ -64,7 +67,7 @@ namespace VkGroupsPostSyncHelper
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            Console.WriteLine("End work ReadPostsService");
+            _logger.LogInformation("End work ReadPostsService");
             return Task.CompletedTask;
         }
     }

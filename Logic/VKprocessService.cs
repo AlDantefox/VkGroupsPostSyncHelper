@@ -1,11 +1,11 @@
 ﻿using Microsoft.Extensions.Configuration;
-using VkGroupsPostSyncHelper.SQLite;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
+using VkGroupsPostSyncHelper.SQLite;
 using VkNet.Model.Attachments;
 
 namespace VkGroupsPostSyncHelper.Logic
@@ -14,10 +14,12 @@ namespace VkGroupsPostSyncHelper.Logic
     {
         MainDbContext _context;
         private IConfiguration _config;
-        public VKprocessService(MainDbContext context, IConfiguration config)
+        private ILogger<VKprocessService> _logger;
+        public VKprocessService(MainDbContext context, IConfiguration config, ILogger<VKprocessService> logger)
         {
             _config = config;
             _context = context;
+            _logger = logger;
         }
 
         private bool LoadImageData 
@@ -40,11 +42,14 @@ namespace VkGroupsPostSyncHelper.Logic
                 var existing = _context.VkGroupPosts.FirstOrDefault(p => p.VkId == post.Id);
                 if (existing == null && post.Id.HasValue)
                 {
-                    var addedPost = await _context.VkGroupPosts.AddAsync(new VkGroupPost() { 
-                        Text = post.Text, 
+                    var addedPost = new VkGroupPost()
+                    {
+                        Text = post.Text,
                         VkId = post.Id,
                         PostDate = post.Date
-                    });
+                    };
+                    await _context.VkGroupPosts.AddAsync(addedPost);
+                    _logger.LogInformation($"Try add new post with id:{addedPost.VkId} and date:{addedPost.PostDate}");
                     added++;
 
                     if (post.Attachments != null && post.Attachments.Count > 0)
@@ -69,14 +74,15 @@ namespace VkGroupsPostSyncHelper.Logic
                                     if (this.LoadImageData)
                                     {
                                         using var wc = new WebClient();
-                                        byte[] imageBytes = wc.DownloadData(url);
+                                        byte[] imageBytes = await wc.DownloadDataTaskAsync(url);
                                         if (imageBytes != null)
                                         {
                                             img.Data = imageBytes;
                                         }
                                     }
 
-                                    _context.VkPostImages.Add(img);
+                                    await _context.VkPostImages.AddAsync(img);
+                                    _logger.LogInformation($"Try add new post image with id:{img.VkId} and url:{img.Url}");
                                 }
                             }
                             else
@@ -95,7 +101,8 @@ namespace VkGroupsPostSyncHelper.Logic
         {
             var post = await _context.VkGroupPosts.FindAsync(id);
             post.TransferDate = postDate;
-            await _context.SaveChangesAsync(); 
+            _logger.LogDebug($"Mark post with id:{id} and vkId:{post.VkId} sended");
+            await _context.SaveChangesAsync();
         }
 
         public void PrintAllPosts()

@@ -1,8 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using VkNet;
 using VkNet.Enums.Filters;
@@ -15,9 +14,11 @@ namespace VkGroupsPostSyncHelper.VK
     public class VkHandler
     {
         private IConfiguration _config;
-        public VkHandler(IConfiguration config)
+        private ILogger<VkHandler> _logger;
+        public VkHandler(IConfiguration config, ILogger<VkHandler> logger)
         {
             _config = config;
+            _logger = logger;
         }
 
         private String ApplicationKey
@@ -32,7 +33,12 @@ namespace VkGroupsPostSyncHelper.VK
         {
             get
             {
-                return long.Parse(_config.GetSection("VK")[nameof(GroupID)]);
+                long result;
+                if (long.TryParse(_config.GetSection("VK")[nameof(GroupID)], out result))
+                {
+                    return result;
+                }
+                return 0;
             }
         }
 
@@ -41,12 +47,13 @@ namespace VkGroupsPostSyncHelper.VK
             try
             {
                 var vkApi = new VkApi();
+                _logger.LogDebug($"Try Authorize in VK");
                 vkApi.Authorize(new ApiAuthParams
                 { 
                     AccessToken = this.ApplicationKey, 
                     Settings = Settings.All 
                 });
-
+                _logger.LogDebug($"Try Get Posts from VK with offset {offset}");
                 var result = await vkApi.Wall.GetAsync(new WallGetParams
                 {
                     // для сообществ id должно начинаться с -
@@ -55,11 +62,12 @@ namespace VkGroupsPostSyncHelper.VK
                     Offset = offset
                 });
                 var posts = result.WallPosts;
+                _logger.LogDebug($"Result: {posts?.Count ?? 0} posts");
                 return posts;
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                _logger.LogError(ex, $"Error in loading posts from vk. AppKey: {this.ApplicationKey} Group: {this.GroupID} Offset: {offset}");
                 return null;
             }
         }
