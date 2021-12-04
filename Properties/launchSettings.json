@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "VkGroupsPostSyncHelper": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}
