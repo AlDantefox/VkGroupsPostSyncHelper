@@ -19,7 +19,7 @@ namespace VkGroupsPostSyncHelper.Logic
         /// <summary>
         /// Return last post (within publish of no more than 24 hours)
         /// </summary>
-        public TelegramPost GetLastUnsyncPost()
+        public TelegramPost GetLastUnsyncPostForLastDay()
         {
             var dayAgo = DateTime.UtcNow.AddHours(-24);
             var post = _context.VkGroupPosts.Where(p => p.TransferDate == null && p.PostDate.HasValue

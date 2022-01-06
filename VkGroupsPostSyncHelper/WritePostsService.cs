@@ -85,7 +85,7 @@ namespace VkGroupsPostSyncHelper
                     try
                     {
                         _logger.LogDebug("Start search new post for TG");
-                        var newPost = _tgService.GetLastUnsyncPost();
+                        var newPost = _tgService.GetLastUnsyncPostForLastDay();
                         if (newPost != null)
                         {
                             _logger.LogDebug($"posting {newPost.Id} to Tg");
