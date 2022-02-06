@@ -88,7 +88,7 @@ namespace VkGroupsPostSyncHelper
                         var newPost = _tgService.GetLastUnsyncPostForLastDay();
                         if (newPost != null)
                         {
-                            _logger.LogDebug($"posting {newPost.Id} to Tg");
+                            _logger.LogDebug($"posting {newPost.Id} from {newPost.PostDate?.ToString("yyyy-MM-dd HH:mm:ss")} to Tg");
                             var postDate = await _tgHandler.Post(newPost, cancellationToken);
                             if (postDate.HasValue)
                             {
@@ -125,7 +125,7 @@ namespace VkGroupsPostSyncHelper
                             var oldPost = _tgService.GetOldestUnsyncPost(_oldDateTimeAfterUTC);
                             if (oldPost != null)
                             {
-                                _logger.LogDebug($"posting {oldPost.Id} to Tg");
+                                _logger.LogDebug($"posting {oldPost.Id} from {oldPost.PostDate?.ToString("yyyy-MM-dd HH:mm:ss")} to Tg");
                                 var postDate = await _tgHandler.Post(oldPost, cancellationToken);
                                 if (postDate.HasValue)
                                 {
@@ -161,7 +161,7 @@ namespace VkGroupsPostSyncHelper
         private void UpdateSheduleNew()
         {
             _shedulePostNewTime = _shedulePostNew.GetNextOccurrence(DateTime.Now);
-            _logger.LogDebug($"Next write new post try at {_shedulePostNewTime}");
+            _logger.LogDebug($"Next write new post try at {_shedulePostNewTime.ToString("yyyy-MM-dd HH:mm:ss")}");
         }
 
         private void UpdateSheduleOld()
@@ -169,7 +169,7 @@ namespace VkGroupsPostSyncHelper
             if (!_postOnlyNew)
             {
                 _shedulePostOldTime = _shedulePostOld.GetNextOccurrence(DateTime.Now);
-                _logger.LogDebug($"Next write old post try at {_shedulePostOldTime}");
+                _logger.LogDebug($"Next write old post try at {_shedulePostOldTime.ToString("yyyy-MM-dd HH:mm:ss")}");
             }
         }
     }

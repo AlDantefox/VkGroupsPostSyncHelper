@@ -58,7 +58,7 @@ namespace VkGroupsPostSyncHelper.VK
                 {
                     // для сообществ id должно начинаться с -
                     OwnerId = this.GroupID,
-                    Count = 100,
+                    Count = 10,
                     Offset = offset
                 });
                 var posts = result.WallPosts;
