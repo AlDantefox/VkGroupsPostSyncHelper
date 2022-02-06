@@ -18,10 +18,13 @@ namespace VkGroupsPostSyncHelper
             {
                 Log.Logger = new LoggerConfiguration()
                     .MinimumLevel.Verbose()
-                    .WriteTo.Console(restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Verbose)
+                    .WriteTo.Console(
+                        restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Verbose, 
+                        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}")
                     .WriteTo.File("Logs/log-.log",
                         rollingInterval: RollingInterval.Month,
                         retainedFileCountLimit: 10,
+                        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message}{NewLine}{Exception}",
                         restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information)
                     .CreateLogger();
                 var builder = CreateHostBuilder(args).Build();

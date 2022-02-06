@@ -50,6 +50,11 @@ namespace VkGroupsPostSyncHelper
                         do
                         {
                             var posts = await _vkHandler.GetPosts(loaded);
+                            if (posts == null)
+                            {
+                                _logger.LogDebug($"Load failed. Break current try");
+                                break;
+                            }
                             loaded += Convert.ToUInt64(posts.Count);
                             addedCount = await _vkService.SaveIfNotExists(posts);
                             totalAdded += addedCount;
@@ -79,7 +84,7 @@ namespace VkGroupsPostSyncHelper
         private void UpdateShedule()
         {
             _sheduledTime = _shedule.GetNextOccurrence(DateTime.Now);
-            _logger.LogDebug($"Next read posts try at {_sheduledTime}");
+            _logger.LogDebug($"Next read posts try at {_sheduledTime.ToString("yyyy-MM-dd HH:mm:ss")}");
         }
     }
 }
